@@ -14,10 +14,9 @@ public class Price {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long id;
+    private Long vehicleId;
     private String currency;
     private BigDecimal price;
-    private Long vehicleId;
 
     public Price() {
     }
@@ -26,14 +25,6 @@ public class Price {
         this.currency = currency;
         this.price = price;
         this.vehicleId = vehicleId;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
     }
 
     public String getCurrency() {
