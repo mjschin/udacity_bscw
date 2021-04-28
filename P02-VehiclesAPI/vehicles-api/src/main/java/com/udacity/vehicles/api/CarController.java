@@ -12,8 +12,10 @@ import java.util.List;
 import java.util.stream.Collectors;
 import javax.validation.Valid;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.Resource;
 import org.springframework.hateoas.Resources;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -31,6 +33,14 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/cars")
 class CarController {
 
+//
+// Note: can use @Autowired, then no need for constructor
+//
+//    @Autowired
+//    private CarService carService;
+//    @Autowired
+//    private CarResourceAssembler assembler;
+
     private final CarService carService;
     private final CarResourceAssembler assembler;
 
@@ -43,9 +53,22 @@ class CarController {
      * Creates a list to store any vehicles.
      * @return list of vehicles
      */
-    @GetMapping
+    @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     Resources<Resource<Car>> list() {
         List<Resource<Car>> resources = carService.list().stream().map(assembler::toResource)
+                .collect(Collectors.toList());
+        return new Resources<>(resources,
+                linkTo(methodOn(CarController.class).list()).withSelfRel());
+    }
+
+    /**
+     * Creates a list to store any vehicles.
+     * Includes location and price.
+     * @return list of vehicles
+     */
+    @GetMapping(path = "/locationprice", produces = MediaType.APPLICATION_JSON_VALUE)
+    Resources<Resource<Car>> listWithLocationAndPrice() {
+        List<Resource<Car>> resources = carService.listWithLocationAndPrice().stream().map(assembler::toResource)
                 .collect(Collectors.toList());
         return new Resources<>(resources,
                 linkTo(methodOn(CarController.class).list()).withSelfRel());
@@ -56,7 +79,7 @@ class CarController {
      * @param id the id number of the given vehicle
      * @return all information for the requested vehicle
      */
-    @GetMapping("/{id}")
+    @GetMapping(path = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
     Resource<Car> get(@PathVariable Long id) {
         /**
          * DONE: Use the `findById` method from the Car Service to get car information.
@@ -86,6 +109,25 @@ class CarController {
     }
 
     /**
+     * Posts information to create a new vehicle in the system.
+     * Includes location and price.
+     * @param car A new vehicle to add to the system.
+     * @return response that the new vehicle was added to the system
+     * @throws URISyntaxException if the request contains invalid fields or syntax
+     */
+    @PostMapping("/locationprice")
+    ResponseEntity<?> postWithLocationAndPrice(@Valid @RequestBody Car car) throws URISyntaxException {
+        /**
+         * DONE: Use the `save` method from the Car Service to save the input car.
+         * DONE: Use the `assembler` on that saved car and return as part of the response.
+         *   Update the first line as part of the above implementing.
+         */
+        Car savedCar = carService.saveWithLocationAndPrice(car);
+        Resource<Car> resource = assembler.toResource(savedCar);
+        return ResponseEntity.created(new URI(resource.getId().expand().getHref())).body(resource);
+    }
+
+    /**
      * Updates the information of a vehicle in the system.
      * @param id The ID number for which to update vehicle information.
      * @param car The updated information about the related vehicle.
@@ -101,6 +143,27 @@ class CarController {
          */
         car.setId(id);
         Car savedCar = carService.save(car);
+        Resource<Car> resource = assembler.toResource(savedCar);
+        return ResponseEntity.ok(resource);
+    }
+
+    /**
+     * Updates the information of a vehicle in the system.
+     * Includes location and price.
+     * @param id The ID number for which to update vehicle information.
+     * @param car The updated information about the related vehicle.
+     * @return response that the vehicle was updated in the system
+     */
+    @PutMapping("/locationprice/{id}")
+    ResponseEntity<?> putWithLocationAndPrice(@PathVariable Long id, @Valid @RequestBody Car car) {
+        /**
+         * DONE: Set the id of the input car object to the `id` input.
+         * DONE: Save the car using the `save` method from the Car service
+         * DONE: Use the `assembler` on that updated car and return as part of the response.
+         *   Update the first line as part of the above implementing.
+         */
+        car.setId(id);
+        Car savedCar = carService.saveWithLocationAndPrice(car);
         Resource<Car> resource = assembler.toResource(savedCar);
         return ResponseEntity.ok(resource);
     }

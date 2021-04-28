@@ -5,6 +5,7 @@ import java.util.Objects;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -16,13 +17,20 @@ public class MapsClient {
 
     private static final Logger log = LoggerFactory.getLogger(MapsClient.class);
 
-    private final WebClient client;
-    private final ModelMapper mapper;
+    private WebClient client;
 
-    public MapsClient(WebClient maps,
-            ModelMapper mapper) {
+    // Note:
+    // One may annotate with @Autowired, and exclude it from the constructor below,
+    // as there is only one ModelMapper bean.
+    @Autowired
+    private ModelMapper mapper;
+
+    // Note:
+    // the parameter name "maps" matches the bean name defined in the VehiclesApiApplication class.
+    public MapsClient(WebClient maps) {
         this.client = maps;
-        this.mapper = mapper;
+        //this.mapper = mapper;
+        //System.out.println("called constructor MapsClient:"+client.getClass()+" / "+mapper.getClass());
     }
 
     /**

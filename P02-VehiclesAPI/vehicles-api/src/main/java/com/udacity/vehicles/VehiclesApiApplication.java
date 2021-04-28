@@ -42,6 +42,7 @@ public class VehiclesApiApplication {
 
     @Bean
     public ModelMapper modelMapper() {
+        System.out.println("calling modelMapper bean");
         return new ModelMapper();
     }
 
@@ -49,6 +50,8 @@ public class VehiclesApiApplication {
      * Web Client for the maps (location) API
      * @param endpoint where to communicate for the maps API
      * @return created maps endpoint
+     * Note: the name of this bean is called "maps", the web client that uses this
+     * bean will have to use a constructor argument named "maps".
      */
     @Bean(name="maps")
     public WebClient webClientMaps(@Value("${maps.endpoint}") String endpoint) {
@@ -59,10 +62,19 @@ public class VehiclesApiApplication {
      * Web Client for the pricing API
      * @param endpoint where to communicate for the pricing API
      * @return created pricing endpoint
+     * Note: the name of this bean is called "pricing", the web client that uses this
+     * bean will have to use a constructor argument named "pricing".
      */
     @Bean(name="pricing")
     public WebClient webClientPricing(@Value("${pricing.endpoint}") String endpoint) {
         return WebClient.create(endpoint);
     }
+
+    @Bean
+    public WebClient doWhatever() {
+        return WebClient.create();
+    }
+
+
 
 }

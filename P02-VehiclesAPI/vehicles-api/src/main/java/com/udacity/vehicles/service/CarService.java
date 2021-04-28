@@ -8,6 +8,7 @@ import com.udacity.vehicles.domain.car.CarRepository;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -18,6 +19,16 @@ import org.springframework.web.reactive.function.client.WebClient;
  */
 @Service
 public class CarService {
+
+//
+// Note: can use @Autowired, then no need for constructor
+//
+//    @Autowired
+//    private CarRepository repository;
+//    @Autowired
+//    private MapsClient webClientMaps;
+//    @Autowired
+//    private PriceClient webClientPricing;
 
     private final CarRepository repository;
     private final MapsClient webClientMaps;
@@ -41,6 +52,22 @@ public class CarService {
      */
     public List<Car> list() {
         return repository.findAll();
+    }
+
+    /**
+     * Gathers a list of all vehicles
+     * Includes location and price.
+     * @return a list of all vehicles in the CarRepository
+     */
+    public List<Car> listWithLocationAndPrice() {
+        List<Car> carList = repository.findAll();
+        carList.forEach(c ->
+            {
+                c.setPrice(webClientPricing.getPriceMS(c.getId()));
+                c.setLocation(webClientMaps.getAddress(c.getLocation()));
+            }
+        );
+        return carList;
     }
 
     /**
@@ -70,7 +97,7 @@ public class CarService {
          * Note: The car class file uses @transient, meaning you will need to call
          *   the pricing service each time to get the price.
          */
-        String price = webClientPricing.getPrice(id);
+        String price = webClientPricing.getPriceMS(id);
         car.setPrice(price);
 
         /**
@@ -102,6 +129,27 @@ public class CarService {
                     }).orElseThrow(CarNotFoundException::new);
         }
 
+        return repository.save(car);
+    }
+
+    /**
+     * Either creates or updates a vehicle, based on prior existence of car.
+     * Includes assigning location and price.
+     * @param car A car object, which can be either new or existing
+     * @return the new/updated car is stored in the repository
+     */
+    public Car saveWithLocationAndPrice(Car car) {
+        if (car.getId() != null) {
+            return repository.findById(car.getId())
+                    .map(carToBeUpdated -> {
+                        carToBeUpdated.setDetails(car.getDetails());
+                        carToBeUpdated.setLocation(webClientMaps.getAddress(car.getLocation()));
+                        carToBeUpdated.setPrice(webClientPricing.getPriceMS(car.getId()));
+                        return repository.save(carToBeUpdated);
+                    }).orElseThrow(CarNotFoundException::new);
+        }
+
+        car.setLocation(webClientMaps.getAddress(car.getLocation()));
         return repository.save(car);
     }
 

@@ -239,6 +239,59 @@ public class CarControllerTest {
     }
 
     /**
+     * Tests for successful update of an existing car in the system
+     * Includes Address information and Price
+     * @throws Exception when car update fails in the system
+     */
+    @Test
+    public void updateCarWithAddressAndPrice() throws Exception {
+        Car modifiedCar = getCar();
+
+        // update a few attributes
+        modifiedCar.setPrice("10000.123");
+        Details details = modifiedCar.getDetails();
+        details.setEngine("V10");
+        details.setModelYear(1949);
+        modifiedCar.setDetails(details);
+
+        // set location info
+        Location location = new Location(1d,1d);
+        location.setAddress("address A");
+        location.setCity("City C");
+        location.setState("State S");
+        location.setZip("Zip Z");
+        modifiedCar.setLocation(location);
+
+        // mock return the modified car
+        given(carService.saveWithLocationAndPrice(any())).willReturn(modifiedCar);
+        given(mapsClient.getAddress(any())).willReturn(location);
+
+        /*
+         * Response body:
+         * Body = {"id":null,"createdAt":null,"modifiedAt":null,"condition":"USED","details":{"body":"sedan",
+         * "model":"Impala","manufacturer":{"code":101,"name":"Chevrolet"},"numberOfDoors":4,"fuelType":"Gasoline",
+         * "engine":"V10","mileage":32280,"modelYear":1949,"productionYear":2018,"externalColor":"white"},
+         * "location":{"lat":1.0,"lon":1.0,"address":"address A","city":"City C","state":"State S","zip":"Zip Z"},
+         * "price":"10000.123","links":[{"rel":"self","href":"http://localhost/cars/{id}","hreflang":null,"media":null,
+         * "title":null,"type":null,"deprecation":null},{"rel":"cars","href":"http://localhost/cars","hreflang":null,
+         * "media":null,"title":null,"type":null,"deprecation":null}]}
+         */
+
+        mvc.perform(
+                MockMvcRequestBuilders.put(new URI("/cars/locationprice/1"))
+                        .content(json.write(modifiedCar).getJson())
+                        .contentType(MediaType.APPLICATION_JSON_UTF8)
+                        .accept(MediaType.APPLICATION_JSON_UTF8))
+                .andDo(print()) // Print the MvcResult details to the standard output stream
+                .andExpect(status().isOk())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.location.address").exists())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.price").value("10000.123"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.details.engine").value("V10"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.details.modelYear").value(1949))
+        ;
+    }
+
+    /**
      * Creates an example Car object for use in testing.
      *
      * @return an example Car object
